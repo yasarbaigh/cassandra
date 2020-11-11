@@ -108,6 +108,11 @@ public class AbstractCommitLogServiceTest
         {
             // nop
         }
+
+        protected long incrementPendingTaks()
+        {
+            return pending.incrementAndGet();
+        }
     }
 
     @Test
@@ -208,5 +213,14 @@ public class AbstractCommitLogServiceTest
         now = pollStarted + Integer.MAX_VALUE;
         Assert.assertTrue(syncRunnable.maybeLogFlushLag(pollStarted, now));
         Assert.assertEquals(now - pollStarted, syncRunnable.getTotalSyncDuration());
+    }
+
+    @Test
+    public void testPendingTasks()
+    {
+        FakeCommitLogService commitLogService = new FakeCommitLogService(10);
+        long initialPendingTasks = commitLogService.getPendingTasks();
+        long currentPendingTasks = commitLogService.incrementPendingTaks();
+        Assert.assertTrue( currentPendingTasks > initialPendingTasks );
     }
 }
