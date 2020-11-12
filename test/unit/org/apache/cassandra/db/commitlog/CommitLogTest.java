@@ -999,5 +999,48 @@ public abstract class CommitLogTest
 
         Assert.assertEquals(replayed, 1);
     }
+
+    @Test
+    public void testTotalCommitLogSize() throws Exception {
+        long initialCLSize = CommitLog.instance.metrics.totalCommitLogSize.getValue();
+
+        Keyspace ks = Keyspace.open(KEYSPACE1);
+        ColumnFamilyStore cfs = ks.getColumnFamilyStore(STANDARD1);
+        Mutation rm1 = new RowUpdateBuilder(cfs.metadata(), 0, "k").clustering("bytes")
+                                                                   .add("val", ByteBuffer.allocate(DatabaseDescriptor.getCommitLogSegmentSize() / 4)).build();
+
+        CommitLog.instance.add(rm1);
+        long latestCLSize = CommitLog.instance.metrics.totalCommitLogSize.getValue();
+        assertTrue(latestCLSize > initialCLSize);
+    }
+
+    @Test
+    public void testCompletedTasks() throws Exception {
+        long initialCompletedTasks = CommitLog.instance.metrics.completedTasks.getValue();
+
+        Keyspace ks = Keyspace.open(KEYSPACE1);
+        ColumnFamilyStore cfs = ks.getColumnFamilyStore(STANDARD1);
+        Mutation rm1 = new RowUpdateBuilder(cfs.metadata(), 0, "k").clustering("bytes")
+                                                                   .add("val", bytes("this is a string")).build();
+
+        CommitLog.instance.add(rm1);
+        long latestCompletedTasks = CommitLog.instance.metrics.completedTasks.getValue();
+        assertTrue(latestCompletedTasks > initialCompletedTasks);
+    }
+
+    @Test
+    public void testWaitingOnCommit() throws Exception {
+
+        long initialCount = CommitLog.instance.metrics.waitingOnCommit.getCount();
+
+        Keyspace ks = Keyspace.open(KEYSPACE1);
+        ColumnFamilyStore cfs = ks.getColumnFamilyStore(STANDARD1);
+        Mutation rm1 = new RowUpdateBuilder(cfs.metadata(), 0, "k").clustering("bytes")
+                                                                   .add("val", bytes("this is a string")).build();
+
+        CommitLog.instance.add(rm1);
+        long latestCount = CommitLog.instance.metrics.waitingOnCommit.getCount();
+        assertTrue(latestCount > initialCount);
+    }
 }
 
