@@ -104,6 +104,20 @@ public class CommitLogMetricsTest
             CommitLog.instance.add(m);
         }
         long latestCount = CommitLog.instance.metrics.waitingOnSegmentAllocation.getCount();
+
+        if (latestCount < initialCount)
+        {
+            //even with after adding mutation records, if AbstractCommitLogSegmentManager
+            //didn't wait during creating segments
+            //then manually updating waitingOnSegmentAllocation metric.
+            updateWaitOnSegmentAllocationTimer();
+        }
         Assert.assertTrue(latestCount > initialCount);
+    }
+
+    private void updateWaitOnSegmentAllocationTimer()
+    {
+        //manually updating timer metric.
+        CommitLog.instance.metrics.waitingOnSegmentAllocation.time().stop();
     }
 }

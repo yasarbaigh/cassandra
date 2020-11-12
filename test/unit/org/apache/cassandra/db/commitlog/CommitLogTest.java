@@ -1007,7 +1007,7 @@ public abstract class CommitLogTest
         Keyspace ks = Keyspace.open(KEYSPACE1);
         ColumnFamilyStore cfs = ks.getColumnFamilyStore(STANDARD1);
         Mutation rm1 = new RowUpdateBuilder(cfs.metadata(), 0, "k").clustering("bytes")
-                                                                   .add("val", bytes("this is a string")).build();
+                                                                   .add("val", ByteBuffer.allocate(DatabaseDescriptor.getCommitLogSegmentSize() / 4)).build();
 
         CommitLog.instance.add(rm1);
         long latestCLSize = CommitLog.instance.metrics.totalCommitLogSize.getValue();
